@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veo 3 Prompt Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Latar belakang abu-abu muda */
+        }
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px; /* Sudut lebih bulat */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Bayangan lebih lembut */
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600; /* Teks label lebih tebal */
+            color: #374151; /* Warna teks abu-abu gelap */
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem; /* Padding lebih besar */
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db; /* Border abu-abu muda */
+            border-radius: 8px; /* Sudut input lebih bulat */
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #3b82f6; /* Border biru saat fokus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Bayangan biru saat fokus */
+            outline: none;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .btn-primary {
+            background-color: #3b82f6; /* Biru primer */
+            color: white;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Biru lebih gelap saat hover */
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #6b7280; /* Abu-abu sekunder */
+            color: white;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* Abu-abu lebih gelap saat hover */
+            transform: translateY(-1px);
+        }
+        .prompt-output-box {
+            margin-top: 0.5rem; /* Mengurangi margin atas karena judul h3 sudah ada */
+            padding: 1rem;
+            background-color: #f9fafb; /* Latar belakang abu-abu sangat muda */
+            border: 1px solid #e5e7eb; /* Border abu-abu muda */
+            border-radius: 8px;
+            white-space: pre-wrap; /* Agar prompt bisa wrap */
+            word-wrap: break-word;
+            font-family: 'Courier New', Courier, monospace; /* Font monospace untuk prompt */
+            color: #1f2937;
+            font-size: 0.9rem; /* Sedikit lebih kecil untuk memuat lebih banyak teks */
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #10b981; /* Hijau untuk sukses */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        h1, h2, h3 {
+            color: #111827; /* Warna judul lebih gelap */
+        }
+        /* Animasi sederhana untuk judul */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animated-title {
+            animation: fadeInDown 0.8s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2 animated-title">Veo 3 Prompt Generator</h1>
+            <p class="text-md text-gray-600">by Inix Aqil</p>
+            <p class="text-sm text-gray-500 mt-1"><em>(Catatan: Format prompt Veo 3 mungkin spesifik. Sesuaikan output jika diperlukan.)</em></p>
+        </header>
+
+        <form id="promptForm" class="space-y-6">
+            <div>
+                <label for="subject">Subjek Utama:</label>
+                <input type="text" id="subject" name="subject" placeholder="Contoh: Seekor naga emas raksasa">
+            </div>
+
+            <div>
+                <label for="action">Aksi/Gerakan:</label>
+                <input type="text" id="action" name="action" placeholder="Contoh: terbang melintasi pegunungan bersalju">
+            </div>
+
+            <div>
+                <label for="scene">Deskripsi Adegan/Latar Belakang:</label>
+                <textarea id="scene" name="scene" placeholder="Contoh: di bawah langit senja yang dramatis, dengan kastil kuno di kejauhan"></textarea>
+            </div>
+
+            <div>
+                <label for="style">Gaya Artistik:</label>
+                <select id="style" name="style">
+                    <option value="">-- Pilih Gaya --</option>
+                    <option value="fotorealistis">Fotorealistis</option>
+                    <option value="sinematik">Sinematik</option>
+                    <option value="lukisan cat minyak">Lukisan Cat Minyak</option>
+                    <option value="lukisan cat air">Lukisan Cat Air</option>
+                    <option value="anime">Anime</option>
+                    <option value="kartun">Kartun</option>
+                    <option value="seni piksel">Seni Piksel</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="steampunk">Steampunk</option>
+                    <option value="fantasi epik">Fantasi Epik</option>
+                    <option value="surealis">Surealis</option>
+                    <option value="abstrak">Abstrak</option>
+                    <option value="vintage">Vintage</option>
+                </select>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="lighting">Pencahayaan:</label>
+                    <select id="lighting" name="lighting">
+                        <option value="">-- Pilih Pencahayaan --</option>
+                        <option value="cahaya pagi hari">Cahaya Pagi Hari</option>
+                        <option value="senja keemasan (golden hour)">Senja Keemasan (Golden Hour)</option>
+                        <option value="cahaya studio">Cahaya Studio</option>
+                        <option value="neon">Neon</option>
+                        <option value="mendung/berawan">Mendung/Berawan</option>
+                        <option value="malam hari">Malam Hari</option>
+                        <option value="cahaya bulan purnama">Cahaya Bulan Purnama</option>
+                        <option value="dramatis">Dramatis</option>
+                        <option value="lembut dan menyebar">Lembut dan Menyebar (Soft Diffused)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="cameraAngle">Sudut Kamera:</label>
+                    <select id="cameraAngle" name="cameraAngle">
+                        <option value="">-- Pilih Sudut Kamera --</option>
+                        <option value="wide shot">Wide Shot (Tangkapan Lebar)</option>
+                        <option value="extreme wide shot">Extreme Wide Shot</option>
+                        <option value="medium shot">Medium Shot</option>
+                        <option value="close-up">Close-up</option>
+                        <option value="extreme close-up">Extreme Close-up</option>
+                        <option value="eye level">Eye Level (Sejajar Mata)</option>
+                        <option value="bird's eye view (dari atas)">Bird's Eye View (Dari Atas)</option>
+                        <option value="low angle view (dari bawah)">Low Angle View (Dari Bawah)</option>
+                        <option value="over the shoulder shot">Over The Shoulder Shot</option>
+                        <option value="dutch angle">Dutch Angle</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label for="colorPalette">Palet Warna:</label>
+                <input type="text" id="colorPalette" name="colorPalette" placeholder="Contoh: warna hangat dan cerah, monokromatik biru, pastel lembut">
+            </div>
+
+            <div>
+                <label for="additionalDetails">Detail Tambahan/Kualitas:</label>
+                <textarea id="additionalDetails" name="additionalDetails" placeholder="Contoh: kualitas tinggi, detail rumit, resolusi 4K, sangat detail, tekstur tajam, bokeh"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="veoParams">Parameter Spesifik Veo 3 (jika ada):</label>
+                    <input type="text" id="veoParams" name="veoParams" placeholder="Contoh: --ar 16:9, --style raw, --duration 5s">
+                </div>
+                <div>
+                    <label for="seed">Seed (Angka):</label>
+                    <input type="number" id="seed" name="seed" placeholder="Contoh: 210873">
+                </div>
+            </div>
+
+            <div>
+                <label for="negativePrompt">Prompt Negatif (Hal yang ingin dihindari):</label>
+                <input type="text" id="negativePrompt" name="negativePrompt" placeholder="Contoh: buram, kualitas rendah, teks, watermark, cacat, tangan jelek">
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 mt-8">
+                <button type="button" id="generateButton" class="btn-primary w-full sm:w-auto flex-grow">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0L7.18 7.5H3.5c-1.66 0-2.69 2.03-1.48 3.22l3.56 3.56L3.78 18.5c-.47 1.71 1.53 3.06 3.06 2.2l4.16-2.37 4.16 2.37c1.53.86 3.53-.49 3.06-2.2l-1.8-4.22 3.56-3.56c1.21-1.19.18-3.22-1.48-3.22h-3.68l-1.33-4.33zM10 15.17L7.37 16.6l.9-2.98-2.4-2.4 3.03-.26L10 8.17l1.1 2.79 3.03.26-2.4 2.4.9 2.98L10 15.17z" clip-rule="evenodd" />
+                    </svg>
+                    Buat Prompt
+                </button>
+                <button type="button" id="resetButton" class="btn-secondary w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101A7.002 7.002 0 0110 3c3.866 0 7 3.134 7 7s-3.134 7-7 7a7.002 7.002 0 01-5.192-2.236A1 1 0 015.707 13.2L5 12.5A5.002 5.002 0 0010 15c2.757 0 5-2.243 5-5s-2.243-5-5-5a5.002 5.002 0 00-4.472 2.764L4 6H2a1 1 0 01-1-1V3a1 1 0 011-1h2zm11.899 9.062A1.002 1.002 0 0115 12.5l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 01.514-1.854z" clip-rule="evenodd" />
+                    </svg>
+                    Reset Form
+                </button>
+            </div>
+        </form>
+
+        <div id="generatedPromptSection" class="mt-10 hidden">
+            <h2 class="text-2xl font-semibold mb-3">Prompt yang Dihasilkan:</h2>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold mb-2">Versi Indonesia:</h3>
+                <div id="generatedPromptContainerID" class="prompt-output-box">
+                    </div>
+                <button type="button" id="copyButtonID" class="btn-primary mt-3 w-full sm:w-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    Salin Prompt Indonesia
+                </button>
+            </div>
+
+            <div>
+                <h3 class="text-xl font-semibold mb-2">Versi Inggris:</h3>
+                <p class="text-xs text-gray-500 mb-1"><em>(Catatan: Input teks bebas seperti subjek, aksi, dll. tidak diterjemahkan otomatis. Sesuaikan jika perlu.)</em></p>
+                <div id="generatedPromptContainerEN" class="prompt-output-box">
+                    </div>
+                <button type="button" id="copyButtonEN" class="btn-primary mt-3 w-full sm:w-auto">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    Salin Prompt Inggris
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastMessage" class="toast"></div>
+
+    <script>
+        // Mendapatkan elemen-elemen DOM
+        const promptForm = document.getElementById('promptForm');
+        const generateButton = document.getElementById('generateButton');
+        const resetButton = document.getElementById('resetButton');
+        const generatedPromptSection = document.getElementById('generatedPromptSection');
+        
+        const generatedPromptContainerID = document.getElementById('generatedPromptContainerID');
+        const copyButtonID = document.getElementById('copyButtonID');
+        
+        const generatedPromptContainerEN = document.getElementById('generatedPromptContainerEN');
+        const copyButtonEN = document.getElementById('copyButtonEN');
+        
+        const toastMessage = document.getElementById('toastMessage');
+
+        // Fungsi untuk menampilkan toast message
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastMessage.classList.add('show');
+            setTimeout(() => {
+                toastMessage.classList.remove('show');
+            }, 3000); // Sembunyikan setelah 3 detik
+        }
+
+        // Fungsi untuk menyalin teks ke clipboard
+        function copyToClipboard(text, successMessage) {
+            if (!text) return;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMessage);
+            } catch (err) {
+                showToast('Gagal menyalin. Coba salin manual.');
+                console.error('Gagal menyalin teks: ', err);
+            }
+            document.body.removeChild(tempTextArea);
+        }
+        
+        // Pemetaan untuk terjemahan dropdown
+        const styleMap = {
+            "fotorealistis": "photorealistic", "sinematik": "cinematic", "lukisan cat minyak": "oil painting",
+            "lukisan cat air": "watercolor painting", "anime": "anime style", "kartun": "cartoon style",
+            "seni piksel": "pixel art", "cyberpunk": "cyberpunk style", "steampunk": "steampunk style",
+            "fantasi epik": "epic fantasy", "surealis": "surreal", "abstrak": "abstract", "vintage": "vintage"
+        };
+        const lightingMap = {
+            "cahaya pagi hari": "morning light", "senja keemasan (golden hour)": "golden hour lighting",
+            "cahaya studio": "studio lighting", "neon": "neon lighting", "mendung/berawan": "overcast/cloudy lighting",
+            "malam hari": "night time", "cahaya bulan purnama": "full moon light", "dramatis": "dramatic lighting",
+            "lembut dan menyebar": "soft diffused lighting"
+        };
+        const cameraAngleMap = {
+            "wide shot": "wide shot", "extreme wide shot": "extreme wide shot", "medium shot": "medium shot",
+            "close-up": "close-up", "extreme close-up": "extreme close-up", "eye level": "eye level",
+            "bird's eye view (dari atas)": "bird's eye view", "low angle view (dari bawah)": "low angle view",
+            "over the shoulder shot": "over the shoulder shot", "dutch angle": "dutch angle"
+        };
+
+        // Event listener untuk tombol "Buat Prompt"
+        generateButton.addEventListener('click', () => {
+            const subject = document.getElementById('subject').value.trim();
+            const action = document.getElementById('action').value.trim();
+            const scene = document.getElementById('scene').value.trim();
+            const styleVal = document.getElementById('style').value;
+            const lightingVal = document.getElementById('lighting').value;
+            const cameraAngleVal = document.getElementById('cameraAngle').value;
+            const colorPalette = document.getElementById('colorPalette').value.trim();
+            const additionalDetails = document.getElementById('additionalDetails').value.trim();
+            const veoParams = document.getElementById('veoParams').value.trim();
+            const seed = document.getElementById('seed').value.trim();
+            const negativePrompt = document.getElementById('negativePrompt').value.trim();
+
+            // ----- Membangun Prompt Versi Indonesia -----
+            let promptPartsID = [];
+            if (subject) promptPartsID.push(subject);
+            if (action) promptPartsID.push(action);
+            if (scene) promptPartsID.push(`di ${scene}`);
+            if (styleVal) promptPartsID.push(`gaya ${styleVal}`);
+            if (lightingVal) promptPartsID.push(`pencahayaan ${lightingVal}`);
+            if (cameraAngleVal) promptPartsID.push(`sudut kamera ${cameraAngleVal}`);
+            if (colorPalette) promptPartsID.push(`palet warna ${colorPalette}`);
+            if (additionalDetails) promptPartsID.push(additionalDetails);
+            
+            let finalPromptID = promptPartsID.join(', ');
+            let paramsID = veoParams;
+            if (seed) {
+                paramsID = paramsID ? `${paramsID}, --seed ${seed}` : `--seed ${seed}`;
+            }
+            if (paramsID) {
+                finalPromptID += `. ${paramsID}`;
+            }
+            if (negativePrompt) {
+                finalPromptID += `. Hindari: ${negativePrompt}`;
+            }
+
+            // ----- Membangun Prompt Versi Inggris -----
+            let promptPartsEN = [];
+            if (subject) promptPartsEN.push(subject); // Tidak diterjemahkan otomatis
+            if (action) promptPartsEN.push(action);   // Tidak diterjemahkan otomatis
+            if (scene) promptPartsEN.push(`in ${scene}`); // Tidak diterjemahkan otomatis, hanya preposisi
+            if (styleVal) promptPartsEN.push(`${styleMap[styleVal] || styleVal} style`);
+            if (lightingVal) promptPartsEN.push(`${lightingMap[lightingVal] || lightingVal} lighting`);
+            if (cameraAngleVal) promptPartsEN.push(`${cameraAngleMap[cameraAngleVal] || cameraAngleVal} camera angle`);
+            if (colorPalette) promptPartsEN.push(`${colorPalette} color palette`); // Tidak diterjemahkan otomatis
+            if (additionalDetails) promptPartsEN.push(additionalDetails); // Tidak diterjemahkan otomatis
+            
+            let finalPromptEN = promptPartsEN.join(', ');
+            let paramsEN = veoParams; // Asumsi parameter sama
+             if (seed) {
+                paramsEN = paramsEN ? `${paramsEN}, --seed ${seed}` : `--seed ${seed}`;
+            }
+            if (paramsEN) {
+                finalPromptEN += `. ${paramsEN}`;
+            }
+            if (negativePrompt) {
+                finalPromptEN += `. Avoid: ${negativePrompt}`; // Tidak diterjemahkan otomatis
+            }
+            
+            // Menampilkan prompt yang dihasilkan
+            if (finalPromptID || finalPromptEN) {
+                generatedPromptContainerID.textContent = finalPromptID || "Tidak ada input untuk prompt Indonesia.";
+                generatedPromptContainerEN.textContent = finalPromptEN || "No input for English prompt.";
+                generatedPromptSection.classList.remove('hidden');
+            } else {
+                generatedPromptContainerID.textContent = "Silakan isi beberapa field untuk membuat prompt.";
+                generatedPromptContainerEN.textContent = "Please fill in some fields to generate a prompt.";
+                generatedPromptSection.classList.remove('hidden');
+            }
+        });
+
+        // Event listener untuk tombol "Salin Prompt Indonesia"
+        copyButtonID.addEventListener('click', () => {
+            copyToClipboard(generatedPromptContainerID.textContent, 'Prompt Indonesia berhasil disalin!');
+        });
+
+        // Event listener untuk tombol "Salin Prompt Inggris"
+        copyButtonEN.addEventListener('click', () => {
+            copyToClipboard(generatedPromptContainerEN.textContent, 'Prompt Inggris berhasil disalin!');
+        });
+        
+        // Event listener untuk tombol "Reset Form"
+        resetButton.addEventListener('click', () => {
+            promptForm.reset(); 
+            generatedPromptSection.classList.add('hidden'); 
+            generatedPromptContainerID.textContent = ''; 
+            generatedPromptContainerEN.textContent = '';
+        });
+
+    </script>
+</body>
+</html>
